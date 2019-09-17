@@ -1,0 +1,30 @@
+variables:
+  APPNAME: "${CI_PROJECT_NAME}"
+
+stages:
+  - buildImage
+  - buildProd
+
+buildImage:
+  tags:
+    - docker
+  stage: buildImage
+  script:
+    - mvn install -Denviroment=test -Dmaven.test.skip=true -U
+    - docker build -f trade-push-server/src/main/docker/Dockerfile -t registry.cn-shanghai.aliyuncs.com/yry-jd/$APPNAME:latest .
+    - docker push registry.cn-shanghai.aliyuncs.com/yry-jd/$APPNAME:latest
+  only:
+    - dev
+  except:
+    - tags
+
+buildProd:
+  stage: buildProd
+  script:
+    - mvn install -Denviroment=production -Dmaven.test.skip=true -U
+    - docker build -f trade-push-server/src/main/docker/Dockerfile -t registry.cn-shanghai.aliyuncs.com/yry-jd/$APPNAME:${CI_COMMIT_TAG} .
+    - docker push registry.cn-shanghai.aliyuncs.com/yry-jd/$APPNAME:${CI_COMMIT_TAG}
+  only:
+    - tags
+  when: manual
+
